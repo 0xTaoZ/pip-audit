@@ -223,29 +223,34 @@ class RequirementSource(DependencySource):
         reqs = list(RequirementsFile.parse(filename=filename.as_posix()))
 
         # Check ahead of time for anything invalid in the requirements file since we don't want to
-        # encounter this while writing out the file. Check for duplicate requirements and lines that
-        # failed to parse.
+        # encounter this while writing out the file. Duplicate requirements are allowed if one of
+        # them already pins the target fix version; otherwise, keep rejecting conflicting pins.
         req_specifiers: dict[str, SpecifierSet] = {}
-
         for req in reqs:
+            if isinstance(req, InvalidRequirementLine):
+                raise RequirementFixError(
+                    f"requirement file {filename} has invalid requirement: {str(req)}"
+                )
             if (
                 isinstance(req, InstallRequirement)
                 and (req.marker is None or req.marker.evaluate())
                 and req.req is not None
             ):
-                duplicate_req_specifier = req_specifiers.get(req.name)
+                req_name = canonicalize_name(req.name)
+                duplicate_req_specifier = req_specifiers.get(req_name)
 
                 if not duplicate_req_specifier:
-                    req_specifiers[req.name] = req.specifier
-
-                elif duplicate_req_specifier != req.specifier:
+                    req_specifiers[req_name] = req.specifier
+                elif duplicate_req_specifier != req.specifier and (
+                    req_name != fix_version.dep.canonical_name
+                    or (
+                        not duplicate_req_specifier.contains(fix_version.version)
+                        and not req.specifier.contains(fix_version.version)
+                    )
+                ):
                     raise RequirementFixError(
                         f"package {req.name} has duplicate requirements: {str(req)}"
                     )
-            elif isinstance(req, InvalidRequirementLine):
-                raise RequirementFixError(
-                    f"requirement file {filename} has invalid requirement: {str(req)}"
-                )
 
         # Now write out the new requirements file
         with filename.open("w") as f:

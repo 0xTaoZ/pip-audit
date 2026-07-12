@@ -361,6 +361,20 @@ def test_requirement_source_fix_parse_failure(monkeypatch, req_file):
             assert expected_req == f.read().strip()
 
 
+def test_requirement_source_fix_duplicate_dependency(req_file):
+    _check_fixes(
+        ["pyjwt==1.7.1\npyjwt==2.4.0"],
+        ["pyjwt==2.4.0\npyjwt==2.4.0"],
+        [req_file()],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="pyjwt", version=Version("1.7.1")),
+                version=Version("2.4.0"),
+            )
+        ],
+    )
+
+
 def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(requirement, "logger", logger)

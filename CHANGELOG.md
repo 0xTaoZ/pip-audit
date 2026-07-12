@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed a crash when applying `--fix` to a requirements file that contains
+  duplicate entries for the affected dependency
+
 ## [2.10.1]
 
 ### Fixed
