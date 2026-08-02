@@ -14,6 +14,10 @@ All versions prior to 0.0.9 are untracked.
   when auditing hashed requirements files
   ([#1024](https://github.com/pypa/pip-audit/issues/1024))
 
+* Duplicate vulnerability records with the same PYSEC ID are now collapsed in
+  audit output
+  ([#1068](https://github.com/pypa/pip-audit/issues/1068))
+
 ## [2.10.1]
 
 ### Fixed
